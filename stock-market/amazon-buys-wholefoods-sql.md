@@ -9,7 +9,7 @@ In this SQL story, I create contrived examples to practice using the following:
 
 On June 16, 2017, Bloomberg [reported](https://www.bloomberg.com/news/articles/2017-06-16/amazon-to-acquire-whole-foods-in-13-7-billion-bet-on-groceries) that Amazon is acquiring Whole Foods.
 
-##Amazon's stock price data for the two weeks leading up to June 16 and the two weeks thereafter. ##
+## Amazon's stock price data for the two weeks leading up to June 16 and the two weeks thereafter. ##
 
 
 Use the INTERVAL function to calculate lower bound and upper bound dates.
@@ -72,7 +72,7 @@ order by date;
 The results show that Amazon's trading volume went up on the day the acquisition-deal was reported. The results also
 don't include weekend-dates. The US stock market is closed on weekends.
 
-##Amazon's stock price data between 14 trading days before and 14 days after June 16##
+## Amazon's stock price data between 14 trading days before and 14 days after June 16 ##
 
 I use the **row_number** window function to accomplish this . I also use common expression to make the SQL easier to read.
 
