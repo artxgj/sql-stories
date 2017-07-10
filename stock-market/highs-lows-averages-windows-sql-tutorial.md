@@ -1,8 +1,8 @@
 # Highs, Lows, Averages And Other Contrived Stock-related Queries #
 
-This is my SQL tutorial-by-examples (contrived examples). I cover subqueries, aggregation, common table expression, window functions and materialized views.
+This is my SQL tutorial-by-examples (contrived examples). I cover subqueries, aggregation functions with GROUP BY clause, common table expression, the window function dense_rank and materialized view.
 
-## The Arbitrary Prime Number Stock Index (APNSI) ##
+## The Arbitrary Prime Number Portfolio (APNP) ##
 
 ```SQL
 SELECT t.id as ticker_id, t.symbol AS ticker_symbol, t.exchange AS exchange_id, e.abbr AS exchange
@@ -12,7 +12,7 @@ FROM
   stock.exchange e ON t.exchange=e.id
 ORDER BY ticker_symbol;
 ```
-The APNSI has 17 stocks.
+The APNP has 17 stocks.
 
 | ticker_id | ticker_symbol | exchange_id | exchange |
 |:----------|:--------------|:------------|:---------|
@@ -34,7 +34,7 @@ The APNSI has 17 stocks.
 | 36        | WFM           | 2           | NASDAQ   |
 | 24        | WMT           | 1           | NYSE     |
 
-## June 2017 average closing price (rounded to 2 decimal places) of each   APNSI stock ##
+## June 2017 average closing price (rounded to 2 decimal places) of each   APNP stock ##
 
 ```SQL
 SELECT t.symbol, round(jun.avg_close, 2) as avg_close_201706
@@ -71,7 +71,7 @@ ORDER by t.symbol;
 | WFM    | 38.88            |
 | WMT    | 77.55            |
 
-## Forget APNSI, I only care about AMFANG's June 2017 average closing price ##
+## What if I only care about AMFANG's June 2017 average closing price ##
 
 Apple, Microsoft, Facebook, Amazon, Netflix and Google (aka Alphabet) lets me contrive an excuse to practice writing a correlated subquery and common table expression.
 
@@ -114,7 +114,7 @@ The **amfang** common table expression is used by the correlated subquery to cal
 | GOOG   | 953.77           |
 | NFLX   | 156.51           |
 
-## The highest traded price and lowest traded price of the APNSI stocks that trade in the NYSE  ##
+## The highest traded price and lowest traded price of the APNP stocks that trade in the NYSE  ##
 
 Instead of using a common table expression to generate the list of NYSE stocks, use a materialized view.
 
@@ -139,7 +139,7 @@ The ticker ids of nyse_stock are:
 | 32     |
 | 33     |
 
-The highest traded price and lowest traded price:
+The highest traded price and lowest traded price are retrieved using the MAX and MIN aggregate functions:
 
 ```SQL
 SELECT symbol, highest_price, lowest_price
@@ -172,7 +172,7 @@ ORDER BY symbol;
 | PEP    | 118.24        | 98.5         |
 | WMT    | 80.48         | 65.28        |
 
-Domino's Pizza (DPZ) is included in the APNSI index  because according to [Quartz](https://qz.com/938620/dominos-dpz-stock-has-outperformed-google-goog-facebook-fb-apple-aapl-and-amazon-amzn-this-decade/), DPZ outperformed AFGA (Apple, Facebook, Google and Amazon) this decade.
+Domino's Pizza (DPZ) is included in the APNP index  because according to [Quartz](https://qz.com/938620/dominos-dpz-stock-has-outperformed-google-goog-facebook-fb-apple-aapl-and-amazon-amzn-this-decade/), DPZ outperformed AFGA (Apple, Facebook, Google and Amazon) this decade.
 
 Note: The data in the stock.historical_data table span from July 11, 2016 to July 7, 2011.
 
@@ -181,9 +181,9 @@ Note: The data in the stock.historical_data table span from July 11, 2016 to Jul
 
 In this section, I practice using SQL's window function dense_rank to rank Nike's performance by trading volume and then limiting the results to 23.
 
-In my stock.ticker table, the id of Nike happened to be 23. What's the big deal with no. 23? Aside from 23 being a prime number, retired basketball player Michael Jordan wore no. 23 (yes, he did have a short fling with no.45). To those too young to know who Michael Jordan is, he is the name behind Nike's Jordan Brand.
+In my stock.ticker table, the id of Nike happens to be 23. What's the big deal with no. 23? Aside from 23 being a prime number, retired basketball player Michael Jordan wore no. 23 (Trivia: He had a short fling with number 45). To those too young to know who Michael Jordan is, he is the name behind Nike's Jordan Brand.
 
-Here is David Rubinstein's brief and terrific [interview](https://www.bloomberg.com/news/videos/2017-06-28/the-david-rubenstein-show-phil-knight-video) with Nike CEO Phil Knight.
+My arbitrary reason for adding Nike to this tutorial's portfolio came from watching David Rubinstein's brief and terrific [interview](https://www.bloomberg.com/news/videos/2017-06-28/the-david-rubenstein-show-phil-knight-video) with Nike CEO Phil Knight.
 
 ```SQL
 SELECT dense_rank() OVER (ORDER BY volume DESC) AS rank,
@@ -257,7 +257,7 @@ ORDER BY symbol, ranking, date DESC;
 
 low_10_close generates rankings by closing price of each company's daily stock information from July 11, 2016 to July 7, 2017.
 
-Below are the results of each company's ten lowest-ranked closing price days. BABA, FB, KO, PEP, WFM and WMT have more than 10 days of data because of tied rankings. The tied rankings are due to these companies having days with the  closing price.
+Below are the results of each company's ten lowest-ranked closing price days. AMD, BABA, FB, KO, PEP, WFM and WMT have more than 10 days of data because of tied rankings. The tied rankings are due to these companies having days with the  closing price.
 
 | symbol | date       | volume    | open   | high   | low    | close  | ranking |
 |:-------|:-----------|:----------|:-------|:-------|:-------|:-------|:--------|
@@ -443,3 +443,57 @@ Below are the results of each company's ten lowest-ranked closing price days. BA
 | WMT    | 2017-01-31 | 9320880   | 66.21  | 66.89  | 65.88  | 66.74  | 9       |
 | WMT    | 2017-02-07 | 5805722   | 66.56  | 67.00  | 66.51  | 66.89  | 10      |
 | WMT    | 2017-01-25 | 8722855   | 67.52  | 67.73  | 66.79  | 66.89  | 10      |
+
+## 200-day Simple Moving Average of Stock Prices ##
+
+To show that the query to calculate the 200-day Simple Moving Average is correct, I start by crafting a 5-day Simple Moving Average of Pepsi's stock price.
+
+```SQL
+WITH pepsi_day_ranked_historical_data AS (
+    SELECT
+      dense_rank() OVER (ORDER BY date) AS day_rank,
+      ticker,
+      date,
+      open,
+      high,
+      low,
+      close,
+      volume
+    FROM
+      stock.historical_data
+    WHERE ticker = (SELECT id FROM stock.ticker WHERE symbol = 'PEP')
+)
+SELECT date, volume, close,
+  (
+      SELECT AVG(pep2.close)
+      FROM
+        pepsi_day_ranked_historical_data pep2
+      WHERE
+        pep2.day_rank BETWEEN (pep1.day_rank - 4) and pep1.day_rank
+      GROUP BY pep2.ticker
+  ) AS price_rolling_average_5days,
+  (
+      -- this query is for verifying that the numbers used for averaging are correct
+      SELECT array_agg(pep2.close)
+      FROM
+        pepsi_day_ranked_historical_data pep2
+      WHERE
+        pep2.day_rank BETWEEN (pep1.day_rank - 4) and pep1.day_rank
+      GROUP BY pep2.ticker
+  ) AS prices_last5_for_averaging
+FROM
+  pepsi_day_ranked_historical_data pep1
+WHERE date BETWEEN '2017-06-28' AND '2017-07-07'
+ORDER BY date desc
+```  
+| date       | volume  | close        | price_rolling_average_5days | prices_last5_for_averaging                |
+|:-----------|:--------|:-------------|:----------------------------|:------------------------------------------|
+| 2017-07-07 | 3972488 | **_115.51_** | 115.374                     | {**_115.49,115.44,115.3,115.13,115.51_**} |
+| 2017-07-06 | 4006999 | **_115.13_** | 115.308                     | {115.18,115.49,115.44,115.3,115.13}       |
+| 2017-07-05 | 4023052 | **_115.30_** | 115.558                     | {116.38,115.18,115.49,115.44,115.3}       |
+| 2017-07-03 | 2250824 | **_115.44_** | 115.686                     | {115.94,116.38,115.18,115.49,115.44}      |
+| 2017-06-30 | 3313250 | **_115.49_** | 116.022                     | {117.12,115.94,116.38,115.18,115.49}      |
+| 2017-06-29 | 3474360 | 115.18       | 116.316                     | {116.96,117.12,115.94,116.38,115.18}      |
+| 2017-06-28 | 3110592 | 116.38       | 116.51                      | {116.15,116.96,117.12,115.94,116.38}      |
+
+The July 7th moving average is calculated using the closing prices from June 30 - July 7. The prices in Pepsi's  prices_last5_for_averaging on July 7th match the closing prices from June 30 - July 7.
