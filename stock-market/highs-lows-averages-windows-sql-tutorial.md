@@ -231,7 +231,6 @@ Check out programmerinterview.com's  [blog](http://www.programmerinterview.com/i
 
 ## The historical data of each APNP company's five lowest-ranked closing days ##
 
-It is time to add a tiny bit of complexity to the use of the window function dense_rank. Ties in ranked closing price can appear and will be treated as having the same rank, so **dense_rank** is used.
 
 ```SQL
 SELECT symbol, date, volume, open, high, low, close, ranking
@@ -248,16 +247,16 @@ FROM
       dense_rank() OVER (PARTITION BY ticker ORDER BY close) AS ranking
     FROM
       stock.historical_data
-  ) AS low_10_close
+  ) AS low5_close
     INNER JOIN
-  stock.ticker t ON  low_10_close.ticker = t.id
+  stock.ticker t ON  low5_close.ticker = t.id
 WHERE ranking <= 5
 ORDER BY symbol, ranking, date DESC;
 ```
 
-low_10_close generates rankings by closing price of each company's daily stock information from July 11, 2016 to July 7, 2017.
+low5_close generates rankings by closing price of each company's daily stock information from July 11, 2016 to July 7, 2017.
 
-Below are the results of each company's ten lowest-ranked closing price days. AMD, BABA, DPZ, and WFM have more than 5 days of data because of tied rankings. The tied rankings are due to these companies having days with the same closing price.
+Below are the results of each company's five lowest-ranked closing price days. AMD, BABA, DPZ, and WFM have more than 5 days of data because of tied rankings (**dense_rank** does ties). The tied rankings are due to these companies having days with the same closing price.
 
 | symbol | date       | volume   | open   | high   | low    | close      | ranking |
 |:-------|:-----------|:---------|:-------|:-------|:-------|:-----------|:--------|
@@ -354,7 +353,7 @@ Below are the results of each company's ten lowest-ranked closing price days. AM
 
 ## 200-day Simple Moving Average of Stock Prices ##
 
-To show that the query to calculate the 200-day Simple Moving Average is correct, I start by crafting a 5-day Simple Moving Average of Pepsi's stock price.
+To show that the query to calculate the 200-day Simple Moving Average is correct, I start with crafting a 5-day Simple Moving Average of Pepsi's stock price.
 
 ```SQL
 WITH pepsi_day_ranked_historical_data AS (
@@ -406,7 +405,7 @@ ORDER BY date desc
 
 The July 7th moving average is calculated using the closing prices from June 30 - July 7. The prices in Pepsi's  prices_last5_for_averaging on July 7th match the closing prices from June 30 - July 7.
 
-Now I calculate the 200-day Simple Moving Average of the APNP stocks for th e week of July 3, 2017. Costco and Intel under-performed.
+Now I calculate the 200-day Simple Moving Average of the APNP stocks for the week of July 3, 2017. Costco and Intel under-performed against their respective 200-day moving average.
 
 ```SQL
 WITH day_ranked_historical_data AS (
