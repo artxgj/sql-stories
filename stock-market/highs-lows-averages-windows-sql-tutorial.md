@@ -142,19 +142,26 @@ The ticker ids of nyse_stock are:
 The highest traded price and lowest traded price:
 
 ```SQL
-SELECT dense_rank() OVER (ORDER BY h.volume DESC) AS rank,
-  h.date,
-  h.volume,
-  h.open,
-  h.high,
-  h.low,
-  h.close
+SELECT symbol, highest_price, lowest_price
 FROM
-  stock.historical_data h
-WHERE
-  h.ticker = 23
-LIMIT 23;
-
+  (
+    SELECT
+      ticker,
+      MAX(high) AS highest_price,
+      MIN(low)  AS lowest_price
+    FROM
+      stock.historical_data
+    WHERE
+      ticker IN (
+        SELECT ticker
+        FROM
+          stock.nyse_stock
+      )
+    GROUP BY ticker
+  ) nyse_hilo
+    INNER JOIN
+  stock.ticker t ON nyse_hilo.ticker = t.id
+ORDER BY symbol;
 ```
 | symbol | highest_price | lowest_price |
 |:-------|:--------------|:-------------|
@@ -179,7 +186,7 @@ In my stock.ticker table, the id of Nike happened to be 23. What's the big deal 
 Here is David Rubinstein's brief and terrific [interview](https://www.bloomberg.com/news/videos/2017-06-28/the-david-rubenstein-show-phil-knight-video) with Nike CEO Phil Knight.
 
 ```SQL
-SSELECT dense_rank() OVER (ORDER BY volume DESC) AS rank,
+SELECT dense_rank() OVER (ORDER BY volume DESC) AS rank,
   date,
   volume,
   open,
