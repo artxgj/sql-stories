@@ -229,7 +229,7 @@ Since the likelihood of getting ties on Nike's trading volume seems small, I cou
 
 Check out programmerinterview.com's  [blog](http://www.programmerinterview.com/index.php/database-sql/rank-versus-dense_rank/) for an  explanation  on the difference between **rank** and **dense_rank**.
 
-## The historical data of each APNP company's ten-lowest ranked closing days ##
+## The historical data of each APNP company's five lowest-ranked closing days ##
 
 It is time to add a tiny bit of complexity to the use of the window function dense_rank. Ties in ranked closing price can appear and will be treated as having the same rank, so **dense_rank** is used.
 
@@ -251,7 +251,7 @@ FROM
   ) AS low_10_close
     INNER JOIN
   stock.ticker t ON  low_10_close.ticker = t.id
-WHERE ranking <= 10
+WHERE ranking <= 5
 ORDER BY symbol, ranking, date DESC;
 ```
 
@@ -405,3 +405,108 @@ ORDER BY date desc
 | 2017-06-28 | 3110592 | 116.38       | 116.51                      | {116.15,116.96,117.12,115.94,116.38}      |
 
 The July 7th moving average is calculated using the closing prices from June 30 - July 7. The prices in Pepsi's  prices_last5_for_averaging on July 7th match the closing prices from June 30 - July 7.
+
+Now I calculate the 200-day Simple Moving Average of the APNP stocks for th e week of July 3, 2017. Costco and Intel under-performed.
+
+```SQL
+WITH day_ranked_historical_data AS (
+    SELECT
+      dense_rank() OVER (ORDER BY date) AS day_rank,
+      ticker,
+      date,
+      open,
+      high,
+      low,
+      close,
+      volume
+    FROM
+      stock.historical_data
+)
+SELECT symbol, date, volume, close,
+  (
+      SELECT AVG(dh2.close)
+      FROM
+        day_ranked_historical_data dh2
+      WHERE
+        dh2.ticker = dh1.ticker AND
+        dh2.day_rank BETWEEN (dh1.day_rank - 199) and dh1.day_rank
+      GROUP BY dh2.ticker
+  ) AS price_rolling_average_200days
+FROM
+  day_ranked_historical_data dh1
+    INNER JOIN
+  stock.ticker t ON dh1.ticker = t.id
+WHERE date BETWEEN '2017-07-03' AND '2017-07-07'
+ORDER BY symbol, date desc;
+```
+
+| symbol | date       | volume   | close  | price_rolling_average_200days |
+|:-------|:-----------|:---------|:-------|:------------------------------|
+| AAPL   | 2017-07-07 | 19201712 | 144.18 | 130.53495                     |
+| AAPL   | 2017-07-06 | 24128782 | 142.73 | 130.3819                      |
+| AAPL   | 2017-07-05 | 21569557 | 144.09 | 130.23615                     |
+| AAPL   | 2017-07-03 | 14277848 | 143.50 | 130.0903                      |
+| AMD    | 2017-07-07 | 88392137 | 13.36  | 10.9469                       |
+| AMD    | 2017-07-06 | 88927822 | 13.02  | 10.91095                      |
+| AMD    | 2017-07-05 | 99450235 | 13.19  | 10.87665                      |
+| AMD    | 2017-07-03 | 39929101 | 12.15  | 10.84095                      |
+| AMZN   | 2017-07-07 | 2643387  | 978.76 | 857.7065                      |
+| AMZN   | 2017-07-06 | 3259613  | 965.14 | 856.7138                      |
+| AMZN   | 2017-07-05 | 3652955  | 971.40 | 855.7636                      |
+| AMZN   | 2017-07-03 | 2909108  | 953.66 | 854.7992                      |
+| BABA   | 2017-07-07 | 8046241  | 142.43 | 107.9091                      |
+| BABA   | 2017-07-06 | 11934243 | 142.20 | 107.7042                      |
+| BABA   | 2017-07-05 | 16995802 | 144.87 | 107.50835                     |
+| BABA   | 2017-07-03 | 6975712  | 140.99 | 107.3072                      |
+| COST   | 2017-07-07 | 7688368  | 154.11 | 163.5028                      |
+| COST   | 2017-07-06 | 6963416  | 157.09 | 163.4931                      |
+| COST   | 2017-07-05 | 3770401  | 158.02 | 163.4666                      |
+| COST   | 2017-07-03 | 1995074  | 158.82 | 163.43825                     |
+| DPZ    | 2017-07-07 | 444206   | 212.32 | 179.22355                     |
+| DPZ    | 2017-07-06 | 624585   | 208.84 | 178.92165                     |
+| DPZ    | 2017-07-05 | 582591   | 208.03 | 178.635                       |
+| DPZ    | 2017-07-03 | 176950   | 209.92 | 178.345                       |
+| FB     | 2017-07-07 | 13615931 | 151.44 | 135.0926                      |
+| FB     | 2017-07-06 | 14951802 | 148.82 | 134.9786                      |
+| FB     | 2017-07-05 | 14334290 | 150.34 | 134.87775                     |
+| FB     | 2017-07-03 | 13862735 | 148.43 | 134.7714                      |
+| GOOG   | 2017-07-07 | 1637785  | 918.59 | 837.5404                      |
+| GOOG   | 2017-07-06 | 1424503  | 906.69 | 836.8045                      |
+| GOOG   | 2017-07-05 | 1813884  | 911.71 | 836.09955                     |
+| GOOG   | 2017-07-03 | 1710373  | 898.70 | 835.3854                      |
+| INTC   | 2017-07-07 | 18304460 | 33.88  | 35.9384                       |
+| INTC   | 2017-07-06 | 20733189 | 33.63  | 35.9547                       |
+| INTC   | 2017-07-05 | 30010803 | 34.34  | 35.97235                      |
+| INTC   | 2017-07-03 | 12676894 | 33.46  | 35.989                        |
+| KO     | 2017-07-07 | 9566044  | 44.39  | 42.546                        |
+| KO     | 2017-07-06 | 13113019 | 44.40  | 42.53575                      |
+| KO     | 2017-07-05 | 6853558  | 44.82  | 42.52425                      |
+| KO     | 2017-07-03 | 6434460  | 44.76  | 42.51085                      |
+| MSFT   | 2017-07-07 | 16878317 | 69.46  | 64.1181                       |
+| MSFT   | 2017-07-06 | 21117572 | 68.57  | 64.05485                      |
+| MSFT   | 2017-07-05 | 21176272 | 69.08  | 63.99665                      |
+| MSFT   | 2017-07-03 | 16165538 | 68.17  | 63.9375                       |
+| NFLX   | 2017-07-07 | 5561263  | 150.18 | 136.0926                      |
+| NFLX   | 2017-07-06 | 5486482  | 146.25 | 135.83295                     |
+| NFLX   | 2017-07-05 | 4627803  | 147.61 | 135.592                       |
+| NFLX   | 2017-07-03 | 3908215  | 146.17 | 135.35135                     |
+| NKE    | 2017-07-07 | 8145436  | 57.98  | 53.6031                       |
+| NKE    | 2017-07-06 | 9035661  | 57.16  | 53.58755                      |
+| NKE    | 2017-07-05 | 16166954 | 57.56  | 53.5765                       |
+| NKE    | 2017-07-03 | 9910021  | 58.65  | 53.5646                       |
+| NVDA   | 2017-07-07 | 16374302 | 146.76 | 104.8507                      |
+| NVDA   | 2017-07-06 | 18657132 | 143.48 | 104.43235                     |
+| NVDA   | 2017-07-05 | 20504738 | 143.05 | 104.0333                      |
+| NVDA   | 2017-07-03 | 17726821 | 139.33 | 103.63225                     |
+| PEP    | 2017-07-07 | 3972488  | 115.51 | 108.9898                      |
+| PEP    | 2017-07-06 | 4006999  | 115.13 | 108.94375                     |
+| PEP    | 2017-07-05 | 4023052  | 115.30 | 108.89645                     |
+| PEP    | 2017-07-03 | 2250824  | 115.44 | 108.84635                     |
+| WFM    | 2017-07-07 | 6227419  | 42.00  | 32.26045                      |
+| WFM    | 2017-07-06 | 5404325  | 42.01  | 32.19155                      |
+| WFM    | 2017-07-05 | 4408657  | 41.99  | 32.1244                       |
+| WFM    | 2017-07-03 | 1891700  | 42.04  | 32.0564                       |
+| WMT    | 2017-07-07 | 5307064  | 75.33  | 71.8337                       |
+| WMT    | 2017-07-06 | 6161845  | 75.47  | 71.8169                       |
+| WMT    | 2017-07-05 | 6037661  | 75.32  | 71.8                          |
+| WMT    | 2017-07-03 | 4848564  | 75.36  | 71.78775                      |
