@@ -172,7 +172,7 @@ ORDER BY symbol;
 | PEP    | 118.24        | 98.5         |
 | WMT    | 80.48         | 65.28        |
 
-Domino's Pizza (DPZ) is included in the APNSI index  because according to [Quartz](https://qz.com/938620/dominos-dpz-stock-has-outperformed-google-goog-facebook-fb-apple-aapl-and-amazon-amzn-this-decade/), DPZ outperformed AGAF (Apple, Google, Amazon and Facebook) this decade.
+Domino's Pizza (DPZ) is included in the APNSI index  because according to [Quartz](https://qz.com/938620/dominos-dpz-stock-has-outperformed-google-goog-facebook-fb-apple-aapl-and-amazon-amzn-this-decade/), DPZ outperformed AFGA (Apple, Facebook, Google and Amazon) this decade.
 
 Note: The data in the stock.historical_data table span from July 11, 2016 to July 7, 2011.
 
@@ -257,7 +257,7 @@ ORDER BY symbol, ranking, date DESC;
 
 low_10_close generates rankings by closing price of each company's daily stock information from July 11, 2016 to July 7, 2017.
 
-Below are the results of each company's ten lowest-ranked closing price days. Pay attention to FB, PEP, WFM and WMT, they have days with tied rankings due to their having the same closing price. Thus, they have more than 10 days of data.
+Below are the results of each company's ten lowest-ranked closing price days. BABA, FB, KO, PEP, WFM and WMT have more than 10 days of data because of tied rankings. The tied rankings are due to these companies having days with the  closing price.
 
 | symbol | date       | volume    | open   | high   | low    | close  | ranking |
 |:-------|:-----------|:----------|:-------|:-------|:-------|:-------|:--------|
