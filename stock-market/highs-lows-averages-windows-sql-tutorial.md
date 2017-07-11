@@ -269,10 +269,7 @@ FROM
   (SELECT
      date,
      close,
-     dense_rank()
-     OVER (
-       ORDER BY close
-       ) AS ranking
+     dense_rank() OVER (ORDER BY close) AS ranking
    FROM
      stock.historical_data
    WHERE ticker = 36  -- WFM's id in the stock.ticker table --
