@@ -159,9 +159,11 @@ CREATE MATERIALIZED VIEW stock.nyse_stock (
   ticker
 ) AS (
   SELECT t.id as ticker_id
-  from stock.ticker t
-  inner JOIN stock.exchange x on t.exchange = x.id
-  where x.abbr='NYSE'
+  FROM 
+    stock.ticker t
+      INNER JOIN 
+    stock.exchange x on t.exchange = x.id
+  WHERE x.abbr='NYSE'
 );
 ```
 The ticker ids of nyse_stock are:
