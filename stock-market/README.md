@@ -18,3 +18,5 @@ The 1-year historical stock data of 17 (prime number!) public companies were dow
   * nyse_stock
   * silicon_valley
   * seattle
+
+See tables-diagram.pdf
