@@ -109,7 +109,7 @@ ORDER by t.symbol;
 
 ## AMFANG's June 2017 average closing price ##
 
-Apple, Microsoft, Facebook, Amazon, Netflix and Google lets me contrive my first example of writing a correlated subquery with a common table expression.
+Apple, Microsoft, Facebook, Amazon, Netflix and Google let me contrive an example of writing a correlated subquery with a common table expression.
 
 ```SQL
 WITH amfang AS (
