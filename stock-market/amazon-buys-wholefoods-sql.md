@@ -1,80 +1,88 @@
-# SQL and Amazon's Acquisition of  Whole Foods
-
-In this SQL story, I create contrived examples to practice using the following:
-
-- [window function](https://www.postgresql.org/docs/9.6/static/tutorial-window.html)
-- [common table expression](https://www.postgresql.org/docs/9.6/static/queries-with.html)
-- [subquery expression](https://www.postgresql.org/docs/9.6/static/functions-subquery.html)
-
-
+# Amazon's Acquisition of  Whole Foods
 On June 16, 2017, Bloomberg [reported](https://www.bloomberg.com/news/articles/2017-06-16/amazon-to-acquire-whole-foods-in-13-7-billion-bet-on-groceries) that Amazon is acquiring Whole Foods.
 
-## Amazon's stock price data for the two weeks leading up to June 16 and the two weeks thereafter. ##
+This practice set builds on the document [Highs, Lows, Averages, Moving Averages, Etc. ](https://github.com/artxgj/sql-stories/blob/master/stock-market/highs-lows-averages-windows-sql-tutorial.md) and  covers:
+
+* INTERVAL function
+* cast function
+* row window function
+* lag window function
 
 
-Use the INTERVAL function to calculate lower bound and upper bound dates.
+## Amazon's Stock Performance One Week Leading To June 16 And The Day After ##
 
+
+Use the **INTERVAL** function to calculate these two dates.
 ```sql
-select '2017-06-16'::DATE - INTERVAL '14 DAYS' AS lowerbound_date, '2017-06-16'::DATE + INTERVAL '14 DAYS' AS upperbound_date;
+SELECT '2017-06-16'::DATE - INTERVAL '7 DAYS' AS week_before,
+       '2017-06-16'::DATE + INTERVAL '1 DAYS' AS day_after
+;
 ```
+|week_before|day_after|
+|:---------:|:-------:|
+|2017-06-09 00:00:00.000000|2017-06-17 00:00:00.000000|
 
-| lowerbound_date            | upperbound_date            |
-|:---------------------------|:---------------------------|
-| 2017-06-02 00:00:00.000000 | 2017-06-30 00:00:00.000000 |
-
-The type of the both dates is TIMESTAMP. If the time portion of the dates is not needed, we can use **cast** to remove the time.
+The type of both dates is TIMESTAMP. If the time portion of the dates is not needed, use **cast** to remove the time.
 
 ```SQL
-select cast('2017-06-16'::DATE - INTERVAL '14 DAYS' AS date) as lowerbound_date, cast ('2017-06-16'::DATE + INTERVAL '14 DAYS' AS date) as upperbound_date;
+SELECT cast('2017-06-16'::DATE - INTERVAL '7 DAYS' AS date) AS week_before,
+       cast('2017-06-16'::DATE + INTERVAL '1 DAYS' AS date) AS day_after
+;
 ```
 
-| lowerbound_date | upperbound_date |
-|:----------------|:----------------|
-| 2017-06-02      | 2017-06-30      |
+|week_before|day_after|
+|:---------:|:-------:|
+|2017-06-09|2017-06-17|
 
 
-I use the date boundary values and a subquery expression to get Amazon's stock price data.
-
+Here's the query to retrieve
 ```SQL
-select date, open, high, low, close, volume
-from stock.historical_data
-where
-  date between '2017-06-16'::DATE - INTERVAL '14 DAYS' and '2017-06-16'::DATE + INTERVAL '14 DAYS'
+SELECT date, open, high, low, close, volume
+FROM
+    stock.historical_data
+WHERE
+  date BETWEEN '2017-06-16'::DATE - INTERVAL '7 DAYS' AND '2017-06-16'::DATE + INTERVAL '1 DAYS'
     and
-  ticker = (select id from stock.ticker where symbol='AMZN')
-order by date;
+  ticker = (SELECT id FROM stock.ticker WHERE symbol='AMZN')
+ORDER BY date
+;
 ```
 
-| date             | open         | high         | low          | close        | volume         |
-|:-----------------|:-------------|:-------------|:-------------|:-------------|:---------------|
-| 2017-06-02       | 998.99       | 1008.48      | 995.67       | 1006.73      | 3752328        |
-| 2017-06-05       | 1007.23      | 1013.21      | 1003.51      | 1011.34      | 2719859        |
-| 2017-06-06       | 1012.00      | 1016.50      | 1001.25      | 1003.00      | 3346432        |
-| 2017-06-07       | 1005.95      | 1010.25      | 1002.00      | 1010.07      | 2823041        |
-| 2017-06-08       | 1012.06      | 1013.61      | 1006.11      | 1010.27      | 2767857        |
-| 2017-06-09       | 1012.50      | 1012.99      | 927.00       | 978.31       | 7647692        |
-| 2017-06-12       | 967.00       | 975.95       | 945.00       | 964.91       | 9447233        |
-| 2017-06-13       | 977.99       | 984.50       | 966.10       | 980.79       | 4580011        |
-| 2017-06-14       | 988.59       | 990.34       | 966.71       | 976.47       | 3974900        |
-| 2017-06-15       | 958.70       | 965.73       | 950.86       | 964.17       | 5373865        |
-| **_2017-06-16_** | **_996.00_** | **_999.75_** | **_982.00_** | **_987.71_** | **_11472662_** |
-| 2017-06-19       | 1017.00      | 1017.00      | 989.90       | 995.17       | 5043408        |
-| 2017-06-20       | 998.00       | 1004.88      | 992.02       | 992.59       | 4076828        |
-| 2017-06-21       | 998.70       | 1002.72      | 992.65       | 1002.23      | 2922473        |
-| 2017-06-22       | 1002.23      | 1006.96      | 997.20       | 1001.30      | 2253433        |
-| 2017-06-23       | 1002.54      | 1004.62      | 998.02       | 1003.74      | 2879145        |
-| 2017-06-26       | 1008.50      | 1009.80      | 992.00       | 993.98       | 3386157        |
-| 2017-06-27       | 990.69       | 998.80       | 976.00       | 976.78       | 3782389        |
-| 2017-06-28       | 978.55       | 990.68       | 969.21       | 990.33       | 3737567        |
-| 2017-06-29       | 979.00       | 987.56       | 965.25       | 975.93       | 4302968        |
-| 2017-06-30       | 980.12       | 983.47       | 967.61       | 968.00       | 3390345        |
+|date|open|high|low|close|volume|
+|:--:|:--:|:--:|:-:|:---:|:----:|
+|2017-06-09|1012.50|1012.99|927.00|978.31|7647692|
+|2017-06-12|967.00|975.95|945.00|964.91|9447233|
+|2017-06-13|977.99|984.50|966.10|980.79|4580011|
+|2017-06-14|988.59|990.34|966.71|976.47|3974900|
+|2017-06-15|958.70|965.73|950.86|964.17|5373865|
+|2017-06-16|996.00|999.75|982.00|987.71|11472662|
+
+June 16 was a Friday. The US stock market doesn't trade on weekends and holidays. The results of the query end with June 16's stock data.
+
+Amazon's trade volume spiked and its stock price went up by 2.44%.
+
 
 The results show that Amazon's trading volume went up on the day the acquisition-deal was reported. The results also
 don't include weekend-dates. The US stock market is closed on weekends.
 
-## Amazon's stock price data between 14 trading days before and 14 days after June 16 ##
+#### The row window function ####
 
-I use the **row_number** window function to accomplish this . I also use common expression to make the SQL easier to read.
+```SQL
+SELECT row_number() OVER (ORDER BY date) AS row_id, date, close
+FROM
+    stock.historical_data
+WHERE ticker = (SELECT id
+                FROM stock.ticker
+                WHERE symbol = 'AMZN')
+LIMIT 3;
+```
+|row_id|date|open|high|low|close|volume|
+|:-----:|:--:|:--:|:--:|:-:|:---:|:----:|
+|1|2016-07-11|750.00|755.90|747.00|753.78|3195272
+|2|2016-07-12|756.86|757.34|740.33|748.21|5623657
+|3|2016-07-13|746.76|756.87|741.25|742.63|4142265
+
+We can use the row_id window function and define a week as 5 days to query the  **stock.historical** table, and retrieve the desired Amazon stock data results.
 
 ```SQL
 WITH t1 AS (
@@ -95,147 +103,109 @@ t2 AS (
 SELECT t1.date, t1.open, t1.high, t1.low, t1.close, t1.volume
 FROM t1, t2
 WHERE
-  t1.row_id BETWEEN (t2.row_id - 14) AND (t2.row_id+14)
+  t1.row_id BETWEEN (t2.row_id-5) AND (t2.row_id+1)
 ;
 ```
 
-Here are the results. Note that there are two holidays during this period, Memorial Day on May 29 and Independence Day on July 4. The US stock market is closed on holidays.
+|date|open|high|low|close|volume|
+|:--:|:--:|:--:|:-:|:---:|:----:|
+|2017-06-09|1012.50|1012.99|927.00|978.31|7647692|
+|2017-06-12|967.00|975.95|945.00|964.91|9447233|
+|2017-06-13|977.99|984.50|966.10|980.79|4580011|
+|2017-06-14|988.59|990.34|966.71|976.47|3974900|
+|2017-06-15|958.70|965.73|950.86|964.17|5373865|
+|**2017-06-16**|996.00|999.75|982.00|987.71|11472662|
+|2017-06-19|1017.00|1017.00|989.90|995.17|5043408|
 
-| date             | open         | high         | low          | close        | volume         |
-|:-----------------|:-------------|:-------------|:-------------|:-------------|:---------------|
-| 2017-05-26       | 995.00       | 998.65       | 989.25       | 995.78       | 3469154        |
-| 2017-05-30       | 996.51       | 1001.20      | 995.52       | 996.70       | 3263069        |
-| 2017-05-31       | 1000.00      | 1000.12      | 982.16       | 994.62       | 3913115        |
-| 2017-06-01       | 998.59       | 998.99       | 991.37       | 995.95       | 2454841        |
-| 2017-06-02       | 998.99       | 1008.48      | 995.67       | 1006.73      | 3752328        |
-| 2017-06-05       | 1007.23      | 1013.21      | 1003.51      | 1011.34      | 2719859        |
-| 2017-06-06       | 1012.00      | 1016.50      | 1001.25      | 1003.00      | 3346432        |
-| 2017-06-07       | 1005.95      | 1010.25      | 1002.00      | 1010.07      | 2823041        |
-| 2017-06-08       | 1012.06      | 1013.61      | 1006.11      | 1010.27      | 2767857        |
-| 2017-06-09       | 1012.50      | 1012.99      | 927.00       | 978.31       | 7647692        |
-| 2017-06-12       | 967.00       | 975.95       | 945.00       | 964.91       | 9447233        |
-| 2017-06-13       | 977.99       | 984.50       | 966.10       | 980.79       | 4580011        |
-| 2017-06-14       | 988.59       | 990.34       | 966.71       | 976.47       | 3974900        |
-| 2017-06-15       | 958.70       | 965.73       | 950.86       | 964.17       | 5373865        |
-| **_2017-06-16_** | **_996.00_** | **_999.75_** | **_982.00_** | **_987.71_** | **_11472662_** |
-| 2017-06-19       | 1017.00      | 1017.00      | 989.90       | 995.17       | 5043408        |
-| 2017-06-20       | 998.00       | 1004.88      | 992.02       | 992.59       | 4076828        |
-| 2017-06-21       | 998.70       | 1002.72      | 992.65       | 1002.23      | 2922473        |
-| 2017-06-22       | 1002.23      | 1006.96      | 997.20       | 1001.30      | 2253433        |
-| 2017-06-23       | 1002.54      | 1004.62      | 998.02       | 1003.74      | 2879145        |
-| 2017-06-26       | 1008.50      | 1009.80      | 992.00       | 993.98       | 3386157        |
-| 2017-06-27       | 990.69       | 998.80       | 976.00       | 976.78       | 3782389        |
-| 2017-06-28       | 978.55       | 990.68       | 969.21       | 990.33       | 3737567        |
-| 2017-06-29       | 979.00       | 987.56       | 965.25       | 975.93       | 4302968        |
-| 2017-06-30       | 980.12       | 983.47       | 967.61       | 968.00       | 3390345        |
-| 2017-07-03       | 972.79       | 974.49       | 951.00       | 953.66       | 2909108        |
-| 2017-07-05       | 961.53       | 975.00       | 955.25       | 971.40       | 3652955        |
-| 2017-07-06       | 964.66       | 974.40       | 959.02       | 965.14       | 3259613        |
-| 2017-07-07       | 969.55       | 980.11       | 969.14       | 978.76       | 2643387        |
+The stock price went up on June 19 but the trade volume dropped! June 19th's trade volume was lower than June 15th's, the day before the Whole Foods acquisition was announced
 
-Here are partial (edited) results of the t1 query that uses the row_number window function to achieve the above 29 days of historical stock data.
+At this point, you're probably aghast over the madness associated with these queries. You're shaking your head and saying, just write this simple query to achieve the same results:
 
 ```SQL
-SELECT date, open, high, low, close, volume, row_number() OVER (ORDER BY date) AS row_id
+SELECT date, open, high, low, close, volume
 FROM
   stock.historical_data
-WHERE ticker = (SELECT id
-                FROM stock.ticker
-                WHERE symbol = 'AMZN')
+WHERE
+  ticker = (SELECT id FROM stock.ticker WHERE symbol = 'AMZN') AND
+  date BETWEEN '2017-06-09' AND '2017-06-19'
+ORDER BY date
+;
 ```
-| date       | open    | high    | low    | close  | volume   | row_id |
-|:-----------|:--------|:--------|:-------|:-------|:---------|:-------|
-| 2016-07-11 | 750.00  | 755.90  | 747.00 | 753.78 | 3195272  | 1      |
-| 2016-07-12 | 756.86  | 757.34  | 740.33 | 748.21 | 5623657  | 2      |
-| 2016-07-13 | 746.76  | 756.87  | 741.25 | 742.63 | 4142265  | 3      |
-| 2016-07-14 | 748.86  | 749.04  | 739.02 | 741.20 | 2390472  | 4      |
-| 2016-07-15 | 746.55  | 746.55  | 734.05 | 735.44 | 3121385  | 5      |
-|            |         |         |        |        |          |        |
-|            |         |         |        |        |          |        |
-| 2017-05-25 | 984.85  | 999.00  | 982.11 | 993.38 | 4822032  | 222    |
-| 2017-05-26 | 995.00  | 998.65  | 989.25 | 995.78 | 3469154  | 223    |
-| 2017-05-30 | 996.51  | 1001.20 | 995.52 | 996.70 | 3263069  | 224    |
-| 2017-05-31 | 1000.00 | 1000.12 | 982.16 | 994.62 | 3913115  | 225    |
-|            |         |         |        |        |          |        |
-|            |         |         |        |        |          |        |
-| 2017-06-16 | 996.00  | 999.75  | 982.00 | 987.71 | 11472662 | 237    |
-| 2017-06-19 | 1017.00 | 1017.00 | 989.90 | 995.17 | 5043408  | 238    |
-|            |         |         |        |        |          |        |
-|            |         |         |        |        |          |        |
-| 2017-07-03 | 972.79  | 974.49  | 951.00 | 953.66 | 2909108  | 248    |
-| 2017-07-05 | 961.53  | 975.00  | 955.25 | 971.40 | 3652955  | 249    |
-| 2017-07-06 | 964.66  | 974.40  | 959.02 | 965.14 | 3259613  | 250    |
-| 2017-07-07 | 969.55  | 980.11  | 969.14 | 978.76 | 2643387  | 251    |
 
-## How did Whole Foods, Walmart and Costco do during the  same 29-day period? ##
+## How did Whole Foods, Walmart and Costco do during the same period? ##
 
 ```SQL
-WITH historical_data_subset AS (
-    SELECT ticker, date, open, high, low, close, volume
-    FROM
-    stock.historical_data
-    WHERE date BETWEEN '2017-05-26' AND '2017-07-07'
+WITH retailers AS (
+  SELECT id AS ticker, symbol
+  FROM
+    stock.ticker
+  WHERE
+    symbol IN (
+      'WFM',
+      'COST',
+      'WMT'
+    )
 )
-SELECT wholefoods.date AS date,
-  wholefoods.open AS wf_open, wholefoods.high AS wf_high, wholefoods.low AS wf_low, wholefoods.close AS wf_close, wholefoods.volume AS wf_volume,
-  costco.open AS cost_open, costco.high AS cost_high, costco.low AS cost_low, costco.close AS cost_close, costco.volume AS cost_volume,
-  walmart.open AS wm_open, walmart.high AS wm_high, walmart.low AS wm_low, walmart.close AS wm_close, walmart.volume AS wm_volume
+SELECT symbol, t.date, t.open, t.high, t.low, t.close, t.volume
 FROM
+  retailers r
+    INNER JOIN
   (
-    SELECT date, open, high, low, close, volume
+    SELECT *
     FROM
-      historical_data_subset
-    WHERE ticker = (SELECT id FROM ticker WHERE symbol='WFM')
-
-  ) wholefoods
-  LEFT JOIN
-  (
-    SELECT date, open, high, low, close, volume
-    FROM
-      historical_data_subset
-    WHERE ticker = (SELECT id FROM ticker WHERE symbol='COST')
-
-  ) costco ON wholefoods.date=costco.date
-  LEFT JOIN
-  (
-    SELECT date, open, high, low, close, volume
-    FROM
-      historical_data_subset
-    WHERE ticker = (SELECT id FROM ticker WHERE symbol='WMT')
-  ) walmart ON wholefoods.date=walmart.date
-ORDER BY date;
+      stock.historical_data
+    WHERE
+      date BETWEEN '2017-06-09' AND '2017-06-19'
+  ) t ON r.ticker = t.ticker
+ORDER BY symbol, date
 ```
 
-| date             | wf_open     | wf_high     | wf_low      | wf_close    | wf_volume       | cost_open    | cost_high    | cost_low     | cost_close   | cost_volume    | wm_open     | wm_high     | wm_low      | wm_close    | wm_volume      |
-|:-----------------|:------------|:------------|:------------|:------------|:----------------|:-------------|:-------------|:-------------|:-------------|:---------------|:------------|:------------|:------------|:------------|:---------------|
-| 2017-05-26       | 35.29       | 35.55       | 35.03       | 35.12       | 2529690         | 180.25       | 180.34       | 177.52       | 177.86       | 4471282        | 78.37       | 78.54       | 77.79       | 78.13       | 6125781        |
-| 2017-05-30       | 35.00       | 35.04       | 34.64       | 34.87       | 4564452         | 177.68       | 179.39       | 177.50       | 178.92       | 2086293        | 78.00       | 78.40       | 77.93       | 78.15       | 5410351        |
-| 2017-05-31       | 34.92       | 35.22       | 34.78       | 34.99       | 3456625         | 179.24       | 180.47       | 178.78       | 180.43       | 2456666        | 78.35       | 78.92       | 78.22       | 78.60       | 8201738        |
-| 2017-06-01       | 35.06       | 35.30       | 34.78       | 35.21       | 3828914         | 180.81       | 181.10       | 179.86       | 180.63       | 2028321        | 78.64       | 79.81       | 78.60       | 79.81       | 8153099        |
-| 2017-06-02       | 35.12       | 35.38       | 34.95       | 35.08       | 2423461         | 180.58       | 181.25       | 179.87       | 180.97       | 2239915        | 79.80       | 79.93       | 79.22       | 79.62       | 7996466        |
-| 2017-06-05       | 35.05       | 35.26       | 34.70       | 35.13       | 2444341         | 181.10       | 182.21       | 180.60       | 182.08       | 1561084        | 79.60       | 80.48       | 79.48       | 80.26       | 10145727       |
-| 2017-06-06       | 34.92       | 35.06       | 34.71       | 34.73       | 2359300         | 181.70       | 182.72       | 181.01       | 181.45       | 2248876        | 79.43       | 79.56       | 78.26       | 78.93       | 11525875       |
-| 2017-06-07       | 34.77       | 34.99       | 34.61       | 34.92       | 2289813         | 181.44       | 182.24       | 181.14       | 182.20       | 1246183        | 79.08       | 79.50       | 78.73       | 79.15       | 8511711        |
-| 2017-06-08       | 34.90       | 35.83       | 34.89       | 35.44       | 2663253         | 181.92       | 182.50       | 180.84       | 181.41       | 1823550        | 79.58       | 80.13       | 78.23       | 78.93       | 10933040       |
-| 2017-06-09       | 35.44       | 35.88       | 35.25       | 35.73       | 2447638         | 181.71       | 181.93       | 179.92       | 180.38       | 2167587        | 79.03       | 79.56       | 78.72       | 79.42       | 9405124        |
-| 2017-06-12       | 35.69       | 35.97       | 35.30       | 35.32       | 3698236         | 179.58       | 180.87       | 178.79       | 179.64       | 2395166        | 79.40       | 80.37       | 78.84       | 79.24       | 10410592       |
-| 2017-06-13       | 35.24       | 35.76       | 35.06       | 35.62       | 2568526         | 179.90       | 180.79       | 179.03       | 180.51       | 1745411        | 79.21       | 79.57       | 78.89       | 79.52       | 5528030        |
-| 2017-06-14       | 35.61       | 35.63       | 35.20       | 35.45       | 1484903         | 180.83       | 181.96       | 180.23       | 181.67       | 1440439        | 79.52       | 80.04       | 79.26       | 79.90       | 5006516        |
-| 2017-06-15       | 34.85       | 34.97       | 32.96       | 33.06       | 8477761         | 180.39       | 181.33       | 178.37       | 180.06       | 1754352        | 79.18       | 79.30       | 77.76       | 78.91       | 11297169       |
-| **_2017-06-16_** | **_42.18_** | **_43.45_** | **_41.75_** | **_42.68_** | **_128832883_** | **_170.40_** | **_170.60_** | **_165.00_** | **_167.11_** | **_24232985_** | **_73.95_** | **_75.50_** | **_73.29_** | **_75.24_** | **_56233027_** |
-| 2017-06-19       | 42.95       | 43.64       | 42.88       | 43.22       | 20804994        | 167.05       | 167.38       | 162.39       | 164.34       | 13809120       | 75.38       | 76.01       | 74.52       | 75.50       | 16095073       |
-| 2017-06-20       | 43.00       | 43.18       | 42.74       | 42.78       | 13305653        | 165.50       | 165.50       | 162.43       | 162.90       | 7337590        | 75.88       | 75.92       | 75.32       | 75.54       | 10019248       |
-| 2017-06-21       | 42.80       | 43.31       | 42.75       | 43.26       | 13607790        | 163.49       | 163.77       | 162.75       | 163.15       | 3421726        | 75.60       | 76.60       | 75.58       | 76.24       | 9011423        |
-| 2017-06-22       | 43.08       | 43.29       | 42.92       | 43.20       | 7664921         | 163.17       | 163.30       | 159.01       | 159.79       | 8043063        | 76.03       | 76.06       | 75.30       | 75.52       | 8111282        |
-| 2017-06-23       | 43.45       | 43.84       | 42.88       | 42.94       | 13552864        | 159.40       | 159.80       | 156.56       | 157.13       | 9506672        | 75.60       | 75.78       | 74.55       | 74.84       | 13080330       |
-| 2017-06-26       | 42.52       | 42.90       | 42.50       | 42.69       | 8628468         | 158.15       | 160.99       | 158.10       | 160.20       | 6473925        | 74.95       | 75.93       | 74.92       | 75.50       | 8587480        |
-| 2017-06-27       | 42.60       | 42.78       | 42.50       | 42.56       | 6582909         | 160.66       | 161.55       | 159.20       | 159.26       | 5533814        | 75.52       | 76.37       | 75.45       | 76.01       | 6454384        |
-| 2017-06-28       | 42.40       | 42.52       | 42.16       | 42.25       | 6875710         | 159.59       | 160.50       | 159.50       | 160.17       | 3234405        | 76.25       | 76.80       | 76.14       | 76.51       | 6988885        |
-| 2017-06-29       | 42.11       | 42.24       | 42.00       | 42.07       | 6640655         | 160.21       | 160.47       | 157.80       | 158.68       | 3664213        | 76.25       | 76.32       | 75.48       | 75.93       | 7063528        |
-| 2017-06-30       | 42.04       | 42.29       | 42.02       | 42.11       | 7676445         | 159.60       | 160.54       | 158.79       | 159.93       | 4755064        | 76.08       | 76.27       | 75.67       | 75.68       | 6963283        |
-| 2017-07-03       | 42.05       | 42.27       | 42.01       | 42.04       | 1891700         | 160.21       | 160.53       | 158.69       | 158.82       | 1995074        | 75.84       | 76.34       | 75.08       | 75.36       | 4848564        |
-| 2017-07-05       | 42.03       | 42.15       | 41.97       | 41.99       | 4408657         | 158.93       | 159.50       | 157.86       | 158.02       | 3770401        | 75.55       | 75.95       | 75.16       | 75.32       | 6037661        |
-| 2017-07-06       | 41.95       | 42.11       | 41.95       | 42.01       | 5404325         | 161.11       | 161.35       | 157.05       | 157.09       | 6963416        | 75.35       | 75.97       | 75.24       | 75.47       | 6161845        |
-| 2017-07-07       | 41.97       | 42.20       | 41.96       | 42.00       | 6227419         | 157.36       | 157.55       | 154.09       | 154.11       | 7688368        | 75.65       | 75.82       | 75.05       | 75.33       | 5307064        |
+|symbol|date|open|high|low|close|volume|
+|:----:|:--:|:--:|:--:|:-:|:---:|:----:|
+|COST|2017-06-09|181.71|181.93|179.92|180.38|2167587|
+|COST|2017-06-12|179.58|180.87|178.79|179.64|2395166|
+|COST|2017-06-13|179.90|180.79|179.03|180.51|1745411|
+|COST|2017-06-14|180.83|181.96|180.23|181.67|1440439|
+|COST|2017-06-15|180.39|181.33|178.37|180.06|1754352|
+|COST|**2017-06-16**|170.40|170.60|165.00|167.11|24232985|
+|COST|2017-06-19|167.05|167.38|162.39|164.34|13809120|
+|WFM|2017-06-09|35.44|35.88|35.25|35.73|2447638|
+|WFM|2017-06-12|35.69|35.97|35.30|35.32|3698236|
+|WFM|2017-06-13|35.24|35.76|35.06|35.62|2568526|
+|WFM|2017-06-14|35.61|35.63|35.20|35.45|1484903|
+|WFM|2017-06-15|34.85|34.97|32.96|33.06|8477761|
+|WFM|**2017-06-16**|42.18|43.45|41.75|42.68|128832883|
+|WFM|2017-06-19|42.95|43.64|42.88|43.22|20804994|
+|WMT|2017-06-09|79.03|79.56|78.72|79.42|9405124|
+|WMT|2017-06-12|79.40|80.37|78.84|79.24|10410592|
+|WMT|2017-06-13|79.21|79.57|78.89|79.52|5528030|
+|WMT|2017-06-14|79.52|80.04|79.26|79.90|5006516|
+|WMT|2017-06-15|79.18|79.30|77.76|78.91|11297169|
+|WMT|**2017-06-16**|73.95|75.50|73.29|75.24|56233027|
+|WMT|2017-06-19|75.38|76.01|74.52|75.50|16095073|
 
-Like Amazon, the trading volume of these three companies went up on June 16.
+All three companies' trade volume went up on June 16, but Costco and Walmart's respective stock price went down on that day and on June 19.
+
+
+## The lag window function ##
+
+```SQL                                                         
+SELECT date,
+  lag(date, 5) OVER (PARTITION BY ticker ORDER BY date) AS five_trading_days_ago,
+  lag(date, -1) OVER (PARTITION BY ticker ORDER BY date)  AS next_trading_day
+FROM
+  stock.historical_data
+LIMIT 7;
+;
+```                                                        
+|date|five_trading_days_ago|next_trading_day|
+|:--:|:-------------------:|:--------------:|
+|2016-07-11|<null>|2016-07-12|
+|2016-07-12|<null>|2016-07-13|
+|2016-07-13|<null>|2016-07-14|
+|2016-07-14|<null>|2016-07-15|
+|2016-07-15|<null>|2016-07-18|
+|2016-07-18|2016-07-11|2016-07-19|
+|2016-07-19|2016-07-12|2016-07-20|
+
+The first trade date in the stock.historical_data table is July 11, 2016. Therefore the value of five_trading_days_ago for July 11, 2016 is NULL.
