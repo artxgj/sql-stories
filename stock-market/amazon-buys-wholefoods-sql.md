@@ -61,7 +61,6 @@ June 16 was a Friday. The US stock market doesn't trade on weekends and holidays
 
 Amazon's trade volume spiked and its stock price went up by 2.44%.
 
-
 The results show that Amazon's trading volume went up on the day the acquisition-deal was reported. The results also
 don't include weekend-dates. The US stock market is closed on weekends.
 
@@ -114,12 +113,12 @@ WHERE
 |2017-06-13|977.99|984.50|966.10|980.79|4580011|
 |2017-06-14|988.59|990.34|966.71|976.47|3974900|
 |2017-06-15|958.70|965.73|950.86|964.17|5373865|
-|**2017-06-16**|996.00|999.75|982.00|987.71|11472662|
+|**2017-06-16**|**996.00**|**999.75**|**982.00**|**987.71**|**11472662**|
 |2017-06-19|1017.00|1017.00|989.90|995.17|5043408|
 
-The stock price went up on June 19 but the trade volume dropped! June 19th's trade volume was lower than June 15th's, the day before the Whole Foods acquisition was announced
+The stock price went up on June 19 but the trade volume dropped! June 19th's trade volume was lower than June 15th's, the day before the Whole Foods acquisition was announced.
 
-At this point, you're probably aghast over the madness associated with these queries. You're shaking your head and saying, just write this simple query to achieve the same results:
+Of course, the previous query was contrived given that a simpler query like the following would have sufficed:
 
 ```SQL
 SELECT date, open, high, low, close, volume
@@ -132,7 +131,7 @@ ORDER BY date
 ;
 ```
 
-## How did Whole Foods, Walmart and Costco do during the same period? ##
+## Stock Performance of Whole Foods, Ali Baba, Costco and Walmart During the Same Period##
 
 ```SQL
 WITH retailers AS (
@@ -141,8 +140,9 @@ WITH retailers AS (
     stock.ticker
   WHERE
     symbol IN (
-      'WFM',
+      'BABA',
       'COST',
+      'WFM',
       'WMT'
     )
 )
@@ -155,36 +155,40 @@ FROM
     FROM
       stock.historical_data
     WHERE
-      date BETWEEN '2017-06-09' AND '2017-06-19'
+      date BETWEEN '2017-06-15' AND '2017-06-19'
   ) t ON r.ticker = t.ticker
 ORDER BY symbol, date
 ```
-
 |symbol|date|open|high|low|close|volume|
 |:----:|:--:|:--:|:--:|:-:|:---:|:----:|
+|BABA|2017-06-09|144.57|148.29|137.01|139.44|54367382|
+|BABA|2017-06-12|139.17|142.20|136.05|139.08|32177599|
+|BABA|2017-06-13|141.88|142.24|135.90|136.60|40879593|
+|BABA|2017-06-14|137.80|139.25|135.26|136.67|32862037|
+|BABA|2017-06-15|135.64|135.67|133.10|135.08|30510350|
+|BABA|**2017-06-16**|**136.28**|**136.50**|**133.55**|**134.87**|**36431311**|
+|BABA|2017-06-19|137.81|140.40|137.40|139.47|24951612|
 |COST|2017-06-09|181.71|181.93|179.92|180.38|2167587|
 |COST|2017-06-12|179.58|180.87|178.79|179.64|2395166|
 |COST|2017-06-13|179.90|180.79|179.03|180.51|1745411|
 |COST|2017-06-14|180.83|181.96|180.23|181.67|1440439|
 |COST|2017-06-15|180.39|181.33|178.37|180.06|1754352|
-|COST|**2017-06-16**|170.40|170.60|165.00|167.11|24232985|
+|COST|**2017-06-16**|**170.40**|**170.60**|**165.00**|**167.11**|**24232985**|
 |COST|2017-06-19|167.05|167.38|162.39|164.34|13809120|
 |WFM|2017-06-09|35.44|35.88|35.25|35.73|2447638|
 |WFM|2017-06-12|35.69|35.97|35.30|35.32|3698236|
 |WFM|2017-06-13|35.24|35.76|35.06|35.62|2568526|
 |WFM|2017-06-14|35.61|35.63|35.20|35.45|1484903|
 |WFM|2017-06-15|34.85|34.97|32.96|33.06|8477761|
-|WFM|**2017-06-16**|42.18|43.45|41.75|42.68|128832883|
+|WFM|**2017-06-16**|**42.18**|**43.45**|**41.75**|**42.68**|**128832883**|
 |WFM|2017-06-19|42.95|43.64|42.88|43.22|20804994|
 |WMT|2017-06-09|79.03|79.56|78.72|79.42|9405124|
 |WMT|2017-06-12|79.40|80.37|78.84|79.24|10410592|
 |WMT|2017-06-13|79.21|79.57|78.89|79.52|5528030|
 |WMT|2017-06-14|79.52|80.04|79.26|79.90|5006516|
 |WMT|2017-06-15|79.18|79.30|77.76|78.91|11297169|
-|WMT|**2017-06-16**|73.95|75.50|73.29|75.24|56233027|
+|WMT|**2017-06-16**|**73.95**|**75.50**|**73.29**|**75.24**|**56233027**|
 |WMT|2017-06-19|75.38|76.01|74.52|75.50|16095073|
-
-All three companies' trade volume went up on June 16, but Costco and Walmart's respective stock price went down on that day and on June 19.
 
 
 ## The lag window function ##
@@ -208,4 +212,58 @@ LIMIT 7;
 |2016-07-18|2016-07-11|2016-07-19|
 |2016-07-19|2016-07-12|2016-07-20|
 
-The first trade date in the stock.historical_data table is July 11, 2016. Therefore the value of five_trading_days_ago for July 11, 2016 is NULL.
+The earliest trade date in the stock.historical_data table is July 11, 2016.
+
+## Daily Percent Change in Stock Price ##
+The lag window function can be used to calculate the daily percent change of stock prices.
+
+```SQL
+WITH retailers AS (
+  SELECT id AS ticker, symbol
+  FROM
+    stock.ticker
+  WHERE
+    symbol IN (
+      'AMZN',
+      'BABA',
+      'COST',
+      'WFM',
+      'WMT'
+    )
+)
+SELECT r.symbol, date, close, ROUND((close-prev_close)/close*100, 2) AS "daily percent change"
+FROM
+    (
+      SELECT
+        ticker,
+        date,
+        volume,
+        close,
+        LAG(close) OVER (PARTITION BY ticker ORDER BY date ) AS prev_close
+      FROM
+        stock.historical_data
+    ) h
+INNER JOIN
+  retailers r ON r.ticker = h.ticker
+WHERE date BETWEEN '2017-06-15' AND '2017-06-19'
+ORDER BY symbol, date
+;
+```
+
+|symbol|date|close|daily percent change|
+|:----:|:--:|:---:|:------------------:|
+|AMZN|2017-06-15|964.17|-1.28|
+|AMZN|**2017-06-16**|**987.71**|**2.38**|
+|AMZN|2017-06-19|995.17|0.75|
+|BABA|2017-06-15|135.08|-1.18|
+|BABA|**2017-06-16**|**134.87**|**-0.16**|
+|BABA|2017-06-19|139.47|3.3|
+|COST|2017-06-15|180.06|-0.89|
+|COST|**2017-06-16**|**167.11**|**-7.75**|
+|COST|2017-06-19|164.34|-1.69|
+|WFM|2017-06-15|33.06|-7.23|
+|WFM|**2017-06-16**|**42.68**|**22.54**|
+|WFM|2017-06-19|43.22|1.25|
+|WMT|2017-06-15|78.91|-1.25|
+|WMT|**2017-06-16**|**75.24**|**-4.88**|
+|WMT|2017-06-19|75.50|0.34|
