@@ -131,7 +131,7 @@ ORDER BY date
 ;
 ```
 
-## Stock Performance of Whole Foods, Ali Baba, Costco and Walmart During the Same Period##
+## Stock Performance of Whole Foods, Ali Baba, Costco and Walmart During the Same Period ##
 
 ```SQL
 WITH retailers AS (
