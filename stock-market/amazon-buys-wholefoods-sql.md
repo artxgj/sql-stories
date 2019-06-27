@@ -61,9 +61,6 @@ June 16 was a Friday. The US stock market doesn't trade on weekends and holidays
 
 Amazon's trade volume spiked and its stock price went up by 2.44%.
 
-The results show that Amazon's trading volume went up on the day the acquisition-deal was reported. The results also
-don't include weekend-dates. The US stock market is closed on weekends.
-
 #### The row window function ####
 
 ```SQL
