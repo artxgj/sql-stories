@@ -1,1 +1,1 @@
-I created my own SQL stories/exercises so I can practice writing more SQL queries.
+My contrived SQL stories/exercises for practicing writing SQL queries.
